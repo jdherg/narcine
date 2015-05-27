@@ -76,11 +76,28 @@ class Sphere():
                 return True
         return False
 
+class Scene():
+    def __init__(self):
+        self.objects = list()
+        pass
+
+    def add_object(self,obj):
+        self.objects.append(obj)
+
+    def ray_intersect(self, ray):
+        for obj in self.objects:
+            if obj.ray_intersect(ray):
+                return True
+        return False
 
 def render():
     pix_dim = 20
     log_dim = 20
-    s = Sphere(Point(0, 0, 0), 5)
+    scene = Scene()
+    s1 = Sphere(Point(-5, -5, 0), 5)
+    s2 = Sphere(Point(5, 5, 0), 5)
+    scene.add_object(s1)
+    scene.add_object(s2)
     y_min = -1 * log_dim//2
     y_max = log_dim//2+1
     y_inc = (y_max - y_min)/pix_dim
@@ -96,7 +113,7 @@ def render():
             camera_loc = Point(0,0,-40)
             screen_loc = Point(col_coord,row_coord,-10)
             r = Ray(screen_loc, Vector(screen_loc, camera_loc))
-            row_res.append(s.ray_intersect(r))
+            row_res.append(scene.ray_intersect(r))
         res.append(row_res)
     return res
 
