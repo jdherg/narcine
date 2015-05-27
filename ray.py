@@ -95,7 +95,9 @@ def render():
         row_coord = y_min + y_inc * row
         for col in range(pix_dim):
             col_coord = x_min + x_inc * col
-            r = Ray(Point(col_coord,row_coord,-10), Vector(Point(0,0,1)))
+            camera_loc = Point(0,0,-40)
+            screen_loc = Point(col_coord,row_coord,-10)
+            r = Ray(screen_loc, Vector(screen_loc, camera_loc))
             if(s.ray_intersect(r)):
                 rowrep += "*"
             else:
