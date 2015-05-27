@@ -88,8 +88,10 @@ def render():
     x_max = log_dim//2+1
     x_inc = (x_max - x_min)/pix_dim
     rep = ""
+    rep += "*" + "-" * pix_dim + "*\n"
     for row in range(pix_dim):
         rowrep = ""
+        rowrep += "|"
         row_coord = y_min + y_inc * row
         for col in range(pix_dim):
             col_coord = x_min + x_inc * col
@@ -98,8 +100,10 @@ def render():
                 rowrep += "*"
             else:
                 rowrep += " "
+        rowrep += "|"
         rowrep += "\n"
         rep += rowrep
+    rep += "*" + "-" * pix_dim + "*"
     return rep
 
 
