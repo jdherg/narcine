@@ -87,31 +87,41 @@ def render():
     x_min = -1 * log_dim//2
     x_max = log_dim//2+1
     x_inc = (x_max - x_min)/pix_dim
-    rep = ""
-    rep += "*" + "-" * pix_dim + "*\n"
+    res = list()
     for row in range(pix_dim):
-        rowrep = ""
-        rowrep += "|"
+        row_res = list()
         row_coord = y_min + y_inc * row
         for col in range(pix_dim):
             col_coord = x_min + x_inc * col
             camera_loc = Point(0,0,-40)
             screen_loc = Point(col_coord,row_coord,-10)
             r = Ray(screen_loc, Vector(screen_loc, camera_loc))
-            if(s.ray_intersect(r)):
+            row_res.append(s.ray_intersect(r))
+        res.append(row_res)
+    return res
+
+
+def ascii_display(grid):
+    rep = ""
+    rep += "*" + "-" * len(grid[0]) + "*\n"
+    for row in grid:
+        rowrep = ""
+        rowrep += "|"
+        for col in row:
+            if(col):
                 rowrep += "*"
             else:
                 rowrep += " "
         rowrep += "|"
         rowrep += "\n"
         rep += rowrep
-    rep += "*" + "-" * pix_dim + "*"
+    rep += "*" + "-" * len(grid[-1]) + "*"
     return rep
 
 
 
 def main():
-    print(render())
+    print(ascii_display(render()))
 
 if __name__ == '__main__':
     main()
