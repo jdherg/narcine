@@ -78,13 +78,22 @@ class Sphere():
 
 
 def render():
-
+    pix_dim = 20
+    log_dim = 20
     s = Sphere(Point(0, 0, 0), 5)
+    y_min = -1 * log_dim//2
+    y_max = log_dim//2+1
+    y_inc = (y_max - y_min)/pix_dim
+    x_min = -1 * log_dim//2
+    x_max = log_dim//2+1
+    x_inc = (x_max - x_min)/pix_dim
     rep = ""
-    for row in range(-10, 11):
+    for row in range(pix_dim):
         rowrep = ""
-        for col in range(-10, 11):
-            r = Ray(Point(col, row, -5), Vector(Point(0, 0, 1)))
+        row_coord = y_min + y_inc * row
+        for col in range(pix_dim):
+            col_coord = x_min + x_inc * col
+            r = Ray(Point(col_coord,row_coord,-10), Vector(Point(0,0,1)))
             if(s.ray_intersect(r)):
                 rowrep += "*"
             else:
