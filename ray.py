@@ -1,6 +1,7 @@
 # import sys
 import math
 import png_writer
+from random import randint
 
 
 class Point():
@@ -56,9 +57,12 @@ class Ray():
 
 
 class Sphere():
-    def __init__(self, center, radius):
+    def __init__(self, center, radius, color=None):
         self.center = center
         self.radius = radius
+        if not color:
+            color = (randint(0, 255), randint(0, 255), randint(0, 255))
+        self.color = color
 
     def ray_intersect(self, ray):
         c = self.center
@@ -74,22 +78,25 @@ class Sphere():
             ts.append(-1*v.dot(d) - disc)
         for t in ts:
             if t >= 0:
-                return True
-        return False
+                return self.color
+        return None
+
 
 class Scene():
     def __init__(self):
         self.objects = list()
         pass
 
-    def add_object(self,obj):
+    def add_object(self, obj):
         self.objects.append(obj)
 
     def ray_intersect(self, ray):
         for obj in self.objects:
-            if obj.ray_intersect(ray):
-                return True
-        return False
+            intersect = obj.ray_intersect(ray)
+            if intersect:
+                return intersect
+        return (0, 0, 0)
+
 
 def render():
     pix_dim = 200
@@ -99,6 +106,7 @@ def render():
     s2 = Sphere(Point(5, 5, 0), 5)
     scene.add_object(s1)
     scene.add_object(s2)
+
     y_min = -1 * log_dim//2
     y_max = log_dim//2+1
     y_inc = (y_max - y_min)/pix_dim
@@ -111,8 +119,8 @@ def render():
         row_coord = y_min + y_inc * row
         for col in range(pix_dim):
             col_coord = x_min + x_inc * col
-            camera_loc = Point(0,0,-40)
-            screen_loc = Point(col_coord,row_coord,-10)
+            camera_loc = Point(0, 0, -40)
+            screen_loc = Point(col_coord, row_coord, -10)
             r = Ray(screen_loc, Vector(screen_loc, camera_loc))
             row_res.append(scene.ray_intersect(r))
         res.append(row_res)
@@ -138,23 +146,15 @@ def ascii_display(grid):
 
 
 def gen_png(grid):
-    rep = list()
-    for row in grid:
-        rowrep = list()
-        for col in row:
-            if(col):
-                rowrep.append((255, 255, 255))
-            else:
-                rowrep.append((0, 0, 0))
-        rep.append(rowrep)
-    return png_writer.gen_png_data(rep)
+    return png_writer.gen_png_data(grid)
 
 
 def main():
     grid = render()
     # print(ascii_display(grid))
+    png_data = gen_png(grid)
     with open('tmp.png', 'wb') as f:
-        f.write(gen_png(grid))
+        f.write(png_data)
 
 if __name__ == '__main__':
     main()
