@@ -106,6 +106,28 @@ class Sphere():
         return Vector(loc, self.center)
 
 
+class Plane():
+    def __init__(self, point, normal, color=None):
+        self.point = point
+        self._normal = normal
+        if not color:
+            color = (randint(0, 255), randint(0, 255), randint(0, 255))
+        self.color = color
+
+    def ray_intersect(self, ray):
+        n = self._normal
+        p = self.point
+        d = ray.direction
+        o = ray.origin
+        denom = n.dot(d)
+        if not denom:
+            return None
+        return (n.dot(Vector(p, o))/denom, self)
+
+    def normal(self, point):
+        return self._normal
+
+
 class Camera():
     def __init__(self, position, direction, distance=30):
         self.loc = position
@@ -176,6 +198,8 @@ def render():
     # s2 = Sphere(Point(-2, -2, 10), 5, (0, 0, 255))
     scene.add_object(s1)
     # scene.add_object(s2)
+    p1 = Plane(Point(4, 4, 15), Vector(Point(5, 5, -5)), (0, 255, 0))
+    scene.add_object(p1)
     camera = Camera(Point(0, 0, -40), Vector(Point(0, 0, 1)))
     scene.add_camera(camera)
     light1 = Light(Point(8, -8, -8))
