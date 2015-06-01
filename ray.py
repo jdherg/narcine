@@ -17,6 +17,12 @@ class Point():
                 for x_i, y_i
                 in zip(self.coords, other.coords)]))
 
+    def __add__(self, other):
+        if(type(other) == Vector):
+            return Point(self.x + other.terminal.x,
+                         self.y + other.terminal.y,
+                         self.z + other.terminal.z)
+
     def __str__(self):
         return "( %f , %f , %f )" % (self.x, self.y, self.z)
 
@@ -49,6 +55,13 @@ class Vector():
         zd = self.terminal.z * other.terminal.z
         return xd + yd + zd
 
+    def __mul__(self, other):
+        if(type(other) == int or type(other) == float):
+            return Vector(Point(self.terminal.x * other,
+                                self.terminal.y * other,
+                                self.terminal.z * other))
+        else:
+            raise NotImplementedError
 
 class Ray():
     def __init__(self, origin, direction):
@@ -82,10 +95,32 @@ class Sphere():
             return (min(ts), self.color)
         return None
 
+class Camera():
+    def __init__(self, position, direction, distance=30):
+        self.loc = position
+        self.direction = direction.unit()
+        self.distance = distance
+        self.pix_dim = 200
+        self.log_dim = 20
+        self.y_min = -1 * self.log_dim//2
+        self.y_max = self.log_dim//2+1
+        self.y_inc = (self.y_max - self.y_min)/self.pix_dim
+        self.x_min = -1 * self.log_dim//2
+        self.x_max = self.log_dim//2+1
+        self.x_inc = (self.x_max - self.x_min)/self.pix_dim
+
+    def screen_loc(self, x, y):
+        return Point(x, y, self.loc.z + self.direction.terminal.z * self.distance)
+
+    def ray_to(self, dest):
+        return Ray(self.loc, Vector(dest, self.loc))
 
 class Scene():
     def __init__(self):
         self.objects = list()
+
+    def add_camera(self, camera):
+        self.camera = camera
 
     def add_object(self, obj):
         self.objects.append(obj)
@@ -103,29 +138,20 @@ class Scene():
 
 
 def render():
-    pix_dim = 200
-    log_dim = 20
     scene = Scene()
     s1 = Sphere(Point(2, 2, 0), 5, (255, 0, 0))
     s2 = Sphere(Point(-2, -2, 0), 5, (0, 0, 255))
     scene.add_object(s1)
     scene.add_object(s2)
-
-    y_min = -1 * log_dim//2
-    y_max = log_dim//2+1
-    y_inc = (y_max - y_min)/pix_dim
-    x_min = -1 * log_dim//2
-    x_max = log_dim//2+1
-    x_inc = (x_max - x_min)/pix_dim
+    camera = Camera(Point(0, 0, -40), Vector(Point(0, 0, 1)))
+    scene.add_camera(camera)
     res = list()
-    for row in range(pix_dim):
+    for row in range(camera.pix_dim):
         row_res = list()
-        row_coord = y_min + y_inc * row
-        for col in range(pix_dim):
-            col_coord = x_min + x_inc * col
-            camera_loc = Point(0, 0, -40)
-            screen_loc = Point(col_coord, row_coord, -10)
-            r = Ray(screen_loc, Vector(screen_loc, camera_loc))
+        row_coord = camera.y_min + camera.y_inc * row
+        for col in range(camera.pix_dim):
+            col_coord = camera.x_min + camera.x_inc * col
+            r = camera.ray_to(camera.screen_loc(col_coord, row_coord))
             row_res.append(scene.ray_intersect(r))
         res.append(row_res)
     return res
