@@ -1,5 +1,5 @@
 # import sys
-import math
+from math import pi, floor, sqrt
 import png_writer
 from random import randint
 
@@ -12,8 +12,8 @@ class Point():
         self.coords = (x, y, z)
 
     def distance(self, other):
-        return math.sqrt(
-            sum([math.pow(x_i - y_i, 2)
+        return sqrt(
+            sum([pow(x_i - y_i, 2)
                 for x_i, y_i
                 in zip(self.coords, other.coords)]))
 
@@ -55,6 +55,10 @@ class Vector():
         zd = self.terminal.z * other.terminal.z
         return xd + yd + zd
 
+    def angle_ish(self, other):
+        distance = self.unit().terminal.distance(other.unit().terminal)
+        return distance * pi / 2.0
+
     def __mul__(self, other):
         if(type(other) == int or type(other) == float):
             return Vector(Point(self.terminal.x * other,
@@ -67,6 +71,9 @@ class Ray():
     def __init__(self, origin, direction):
         self.origin = origin
         self.direction = direction.unit()
+
+    def intersect_to_point(self, t):
+        return self.origin + self.direction * t
 
 
 class Sphere():
@@ -82,18 +89,22 @@ class Sphere():
         r = self.radius
         v = Vector(ray.origin, c)
         d = ray.direction
-        disc = math.pow(v.dot(d), 2) - (math.pow(v.length(), 2) - r*r)
+        disc = pow(v.dot(d), 2) - (pow(v.length(), 2) - r*r)
         ts = list()
         if disc == 0:
             ts.append(-1*v.dot(d))
         elif disc > 0:
-            disc = math.pow(disc, 0.5)
+            disc = pow(disc, 0.5)
             ts.append(-1*v.dot(d) + disc)
             ts.append(-1*v.dot(d) - disc)
         ts = [t for t in ts if t >= 0]
         if len(ts) > 0:
-            return (min(ts), self.color)
+            return (min(ts), self)
         return None
+
+    def normal(self, loc):
+        return Vector(loc, self.center)
+
 
 class Camera():
     def __init__(self, position, direction, distance=30):
@@ -115,12 +126,25 @@ class Camera():
     def ray_to(self, dest):
         return Ray(self.loc, Vector(dest, self.loc))
 
+
+class Light():
+    def __init__(self, position, color=None):
+        if not color:
+            color = (255, 255, 255)
+        self.color = color
+        self.loc = position
+
+
 class Scene():
     def __init__(self):
         self.objects = list()
+        self.lights = list()
 
     def add_camera(self, camera):
         self.camera = camera
+
+    def add_light(self, light):
+        self.lights.append(light)
 
     def add_object(self, obj):
         self.objects.append(obj)
@@ -133,18 +157,27 @@ class Scene():
                 intersects.append(intersect)
         intersects = sorted(intersects, key=lambda x: x[0])
         if intersects:
-            return intersects[0][1]
+            base_color = intersects[0][1].color
+            intersect_point = ray.intersect_to_point(intersects[0][0])
+            normal = intersects[0][1].normal(intersect_point)
+            light = self.lights[0]
+            attenuation = 1 - normal.angle_ish(Vector(light.loc, intersect_point )) / pi
+            return (floor(base_color[0] * attenuation),
+                    floor(base_color[1] * attenuation),
+                    floor(base_color[2] * attenuation))
         return (0, 0, 0)
 
 
 def render():
     scene = Scene()
-    s1 = Sphere(Point(2, 2, 0), 5, (255, 0, 0))
-    s2 = Sphere(Point(-2, -2, 0), 5, (0, 0, 255))
+    s1 = Sphere(Point(0, 0, 0), 5, (255, 0, 0))
+    # s2 = Sphere(Point(-2, -2, 10), 5, (0, 0, 255))
     scene.add_object(s1)
-    scene.add_object(s2)
+    # scene.add_object(s2)
     camera = Camera(Point(0, 0, -40), Vector(Point(0, 0, 1)))
     scene.add_camera(camera)
+    light = Light(Point(8, -8, -8))
+    scene.add_light(light)
     res = list()
     for row in range(camera.pix_dim):
         row_res = list()
