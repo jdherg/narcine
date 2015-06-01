@@ -160,8 +160,10 @@ class Scene():
             base_color = intersects[0][1].color
             intersect_point = ray.intersect_to_point(intersects[0][0])
             normal = intersects[0][1].normal(intersect_point)
-            light = self.lights[0]
-            attenuation = 1 - normal.angle_ish(Vector(light.loc, intersect_point )) / pi
+            light_level = 0.0
+            for light in self.lights:
+                light_level += 1 - normal.angle_ish(Vector(light.loc, intersect_point )) / pi
+            attenuation = min(light_level, 1.0)
             return (floor(base_color[0] * attenuation),
                     floor(base_color[1] * attenuation),
                     floor(base_color[2] * attenuation))
@@ -176,8 +178,10 @@ def render():
     # scene.add_object(s2)
     camera = Camera(Point(0, 0, -40), Vector(Point(0, 0, 1)))
     scene.add_camera(camera)
-    light = Light(Point(8, -8, -8))
-    scene.add_light(light)
+    light1 = Light(Point(8, -8, -8))
+    scene.add_light(light1)
+    light2 = Light(Point(-8, 8, -8))
+    scene.add_light(light2)
     res = list()
     for row in range(camera.pix_dim):
         row_res = list()
