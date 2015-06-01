@@ -1,5 +1,6 @@
 # import sys
 import math
+import png_writer
 
 
 class Point():
@@ -91,10 +92,10 @@ class Scene():
         return False
 
 def render():
-    pix_dim = 20
+    pix_dim = 200
     log_dim = 20
     scene = Scene()
-    s1 = Sphere(Point(-5, -5, 0), 5)
+    s1 = Sphere(Point(0, 0, 0), 5)
     s2 = Sphere(Point(5, 5, 0), 5)
     scene.add_object(s1)
     scene.add_object(s2)
@@ -136,9 +137,24 @@ def ascii_display(grid):
     return rep
 
 
+def gen_png(grid):
+    rep = list()
+    for row in grid:
+        rowrep = list()
+        for col in row:
+            if(col):
+                rowrep.append((255, 255, 255))
+            else:
+                rowrep.append((0, 0, 0))
+        rep.append(rowrep)
+    return png_writer.gen_png_data(rep)
+
 
 def main():
-    print(ascii_display(render()))
+    grid = render()
+    # print(ascii_display(grid))
+    with open('tmp.png', 'wb') as f:
+        f.write(gen_png(grid))
 
 if __name__ == '__main__':
     main()
