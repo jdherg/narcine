@@ -74,27 +74,31 @@ class Sphere():
         if disc == 0:
             ts.append(-1*v.dot(d))
         elif disc > 0:
+            disc = math.pow(disc, 0.5)
             ts.append(-1*v.dot(d) + disc)
             ts.append(-1*v.dot(d) - disc)
-        for t in ts:
-            if t >= 0:
-                return self.color
+        ts = [t for t in ts if t >= 0]
+        if len(ts) > 0:
+            return (min(ts), self.color)
         return None
 
 
 class Scene():
     def __init__(self):
         self.objects = list()
-        pass
 
     def add_object(self, obj):
         self.objects.append(obj)
 
     def ray_intersect(self, ray):
+        intersects = list()
         for obj in self.objects:
             intersect = obj.ray_intersect(ray)
             if intersect:
-                return intersect
+                intersects.append(intersect)
+        intersects = sorted(intersects, key=lambda x: x[0])
+        if intersects:
+            return intersects[0][1]
         return (0, 0, 0)
 
 
@@ -102,8 +106,8 @@ def render():
     pix_dim = 200
     log_dim = 20
     scene = Scene()
-    s1 = Sphere(Point(0, 0, 0), 5)
-    s2 = Sphere(Point(5, 5, 0), 5)
+    s1 = Sphere(Point(2, 2, 0), 5, (255, 0, 0))
+    s2 = Sphere(Point(-2, -2, 0), 5, (0, 0, 255))
     scene.add_object(s1)
     scene.add_object(s2)
 
@@ -151,7 +155,6 @@ def gen_png(grid):
 
 def main():
     grid = render()
-    # print(ascii_display(grid))
     png_data = gen_png(grid)
     with open('tmp.png', 'wb') as f:
         f.write(png_data)
