@@ -192,21 +192,9 @@ class Scene():
         return (0, 0, 0)
 
 
-def render():
-    scene = Scene()
-    s1 = Sphere(Point(0, 0, 0), 5, (255, 0, 0))
-    # s2 = Sphere(Point(-2, -2, 10), 5, (0, 0, 255))
-    scene.add_object(s1)
-    # scene.add_object(s2)
-    p1 = Plane(Point(4, 4, 15), Vector(Point(5, 5, -5)), (0, 255, 0))
-    scene.add_object(p1)
-    camera = Camera(Point(0, 0, -40), Vector(Point(0, 0, 1)))
-    scene.add_camera(camera)
-    light1 = Light(Point(8, -8, -8))
-    scene.add_light(light1)
-    light2 = Light(Point(-8, 8, -8))
-    scene.add_light(light2)
+def render(scene):
     res = list()
+    camera = scene.camera
     for row in range(camera.pix_dim):
         row_res = list()
         row_coord = camera.y_min + camera.y_inc * row
@@ -240,8 +228,26 @@ def gen_png(grid):
     return png_writer.gen_png_data(grid)
 
 
+def make_scene():
+    scene = Scene()
+    s1 = Sphere(Point(0, 0, 0), 5, (255, 0, 0))
+    s2 = Sphere(Point(-2, -2, 10), 5, (0, 0, 255))
+    scene.add_object(s1)
+    scene.add_object(s2)
+    p1 = Plane(Point(4, 4, 15), Vector(Point(5, 5, -5)), (0, 255, 0))
+    scene.add_object(p1)
+    camera = Camera(Point(0, 0, -40), Vector(Point(0, 0, 1)))
+    scene.add_camera(camera)
+    light1 = Light(Point(8, -8, -8))
+    scene.add_light(light1)
+    light2 = Light(Point(-8, 8, -8))
+    scene.add_light(light2)
+    return scene
+
+
 def main():
-    grid = render()
+    scene = make_scene()
+    grid = render(scene)
     png_data = gen_png(grid)
     with open('tmp.png', 'wb') as f:
         f.write(png_data)
