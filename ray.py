@@ -173,6 +173,21 @@ class Scene():
     def add_object(self, obj):
         self.objects.append(obj)
 
+    def calc_lighting(self, obj, ray, intersect):
+        base_color = obj.color
+        intersect_point = ray.intersect_to_point(intersect)
+        normal = obj.normal(intersect_point)
+        diffuse_level = 0.0
+        specular_level = 0.0
+        for light in self.lights:
+            diffuse_level += 1 - normal.angle_ish(
+                Vector(light.loc, intersect_point)) / pi
+        diffuse_level = min(diffuse_level, 1.0)
+        lightness = min(diffuse_level + specular_level, 1.0)
+        return (floor(base_color[0] * lightness),
+                floor(base_color[1] * lightness),
+                floor(base_color[2] * lightness))
+
     def ray_intersect(self, ray):
         intersects = list()
         for obj in self.objects:
@@ -181,17 +196,7 @@ class Scene():
                 intersects.append(intersect)
         intersects = sorted(intersects, key=lambda x: x[0])
         if intersects:
-            base_color = intersects[0][1].color
-            intersect_point = ray.intersect_to_point(intersects[0][0])
-            normal = intersects[0][1].normal(intersect_point)
-            light_level = 0.0
-            for light in self.lights:
-                light_level += 1 - normal.angle_ish(
-                    Vector(light.loc, intersect_point)) / pi
-            attenuation = min(light_level, 1.0)
-            return (floor(base_color[0] * attenuation),
-                    floor(base_color[1] * attenuation),
-                    floor(base_color[2] * attenuation))
+            return self.calc_lighting(intersects[0][1], ray, intersects[0][0])
         return (0, 0, 0)
 
 
