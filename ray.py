@@ -67,6 +67,7 @@ class Vector():
         else:
             raise NotImplementedError
 
+
 class Ray():
     def __init__(self, origin, direction):
         self.origin = origin
@@ -143,7 +144,8 @@ class Camera():
         self.x_inc = (self.x_max - self.x_min)/self.pix_dim
 
     def screen_loc(self, x, y):
-        return Point(x, y, self.loc.z + self.direction.terminal.z * self.distance)
+        return Point(
+            x, y, self.loc.z + self.direction.terminal.z * self.distance)
 
     def ray_to(self, dest):
         return Ray(self.loc, Vector(dest, self.loc))
@@ -184,7 +186,8 @@ class Scene():
             normal = intersects[0][1].normal(intersect_point)
             light_level = 0.0
             for light in self.lights:
-                light_level += 1 - normal.angle_ish(Vector(light.loc, intersect_point )) / pi
+                light_level += 1 - normal.angle_ish(
+                    Vector(light.loc, intersect_point)) / pi
             attenuation = min(light_level, 1.0)
             return (floor(base_color[0] * attenuation),
                     floor(base_color[1] * attenuation),
