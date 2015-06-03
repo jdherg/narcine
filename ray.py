@@ -5,76 +5,56 @@ from random import randint
 
 
 class Point():
-    def __init__(self, x, y, z):
-        self.x = x
-        self.y = y
-        self.z = z
-        self.coords = (x, y, z)
-
-    def distance(self, other):
+    @classmethod
+    def distance(cls, start, end):
         return sqrt(
             sum([pow(x_i - y_i, 2)
                 for x_i, y_i
-                in zip(self.coords, other.coords)]))
+                in zip(start, end)]))
 
-    def __add__(self, other):
-        if(type(other) == Vector):
-            return Point(self.x + other.terminal.x,
-                         self.y + other.terminal.y,
-                         self.z + other.terminal.z)
-
-    def __str__(self):
-        return "( %f , %f , %f )" % (self.x, self.y, self.z)
+    @classmethod
+    def add(cls, point, vector):
+        return tuple((x+y for x, y in zip(point, vector)))
 
 
 class Vector():
-    def __init__(self, terminal, origin=None):
-        if not origin:
-            origin = Point(0, 0, 0)
+    @classmethod
+    def make_vec(cls, terminal, origin):
+        return tuple(x - y for x, y in zip(terminal, origin))
 
-        self.terminal = Point(terminal.x - origin.x,
-                              terminal.y - origin.y,
-                              terminal.z - origin.z)
+    @classmethod
+    def length(cls, vec):
+        return Point.distance((0, 0, 0), vec)
 
-    def length(self):
-        return Point(0, 0, 0).distance(self.terminal)
+    @classmethod
+    def unit(cls, vec):
+        length = Vector.length(vec)
+        return (
+            vec[0] / length,
+            vec[1] / length,
+            vec[2] / length)
 
-    def unit(self):
-        unit_term = Point(
-            self.terminal.x / self.length(),
-            self.terminal.y / self.length(),
-            self.terminal.z / self.length())
-        return Vector(unit_term)
+    @classmethod
+    def dot(cls, first, second):
+        return sum((x * y for x, y in zip(first, second)))
 
-    def __str__(self):
-        return "< %s >" % (self.terminal)
-
-    def dot(self, other):
-        xd = self.terminal.x * other.terminal.x
-        yd = self.terminal.y * other.terminal.y
-        zd = self.terminal.z * other.terminal.z
-        return xd + yd + zd
-
-    def angle_ish(self, other):
-        distance = self.unit().terminal.distance(other.unit().terminal)
+    @classmethod
+    def angle_ish(cls, first, second):
+        distance = Point.distance(Vector.unit(first), Vector.unit(second))
         return distance * pi / 2.0
 
-    def __mul__(self, other):
-        if(type(other) == int or type(other) == float):
-            return Vector(Point(self.terminal.x * other,
-                                self.terminal.y * other,
-                                self.terminal.z * other))
-        else:
-            raise NotImplementedError
+    @classmethod
+    def scale(cls, vec, scalar):
+        return tuple((x * scalar for x in vec))
 
 
 class Ray():
     def __init__(self, origin, direction):
         self.origin = origin
-        self.direction = direction.unit()
+        self.direction = Vector.unit(direction)
 
     def intersect_to_point(self, t):
-        return self.origin + self.direction * t
+        return Point.add(self.origin, Vector.scale(self.direction, t))
 
 
 class Sphere():
@@ -88,23 +68,24 @@ class Sphere():
     def ray_intersect(self, ray):
         c = self.center
         r = self.radius
-        v = Vector(ray.origin, c)
+        v = Vector.make_vec(ray.origin, c)
         d = ray.direction
-        disc = pow(v.dot(d), 2) - (pow(v.length(), 2) - r*r)
+        disc = pow(Vector.dot(v, d), 2) - (pow(Vector.length(v), 2) - r*r)
         ts = list()
         if disc == 0:
             ts.append(-1*v.dot(d))
         elif disc > 0:
             disc = pow(disc, 0.5)
-            ts.append(-1*v.dot(d) + disc)
-            ts.append(-1*v.dot(d) - disc)
+            pre = Vector.dot(v, d) * -1
+            ts.append(pre + disc)
+            ts.append(pre - disc)
         ts = [t for t in ts if t >= 0]
         if len(ts) > 0:
             return (min(ts), self)
         return None
 
     def normal(self, loc):
-        return Vector(loc, self.center)
+        return Vector.make_vec(loc, self.center)
 
 
 class Plane():
@@ -120,10 +101,10 @@ class Plane():
         p = self.point
         d = ray.direction
         o = ray.origin
-        denom = n.dot(d)
+        denom = Vector.dot(n, d)
         if not denom:
             return None
-        return (n.dot(Vector(p, o))/denom, self)
+        return (Vector.dot(n, Vector.make_vec(p, o))/denom, self)
 
     def normal(self, point):
         return self._normal
@@ -132,7 +113,7 @@ class Plane():
 class Camera():
     def __init__(self, position, direction, distance=30):
         self.loc = position
-        self.direction = direction.unit()
+        self.direction = Vector.unit(direction)
         self.distance = distance
         self.pix_dim = 200
         self.log_dim = 20
@@ -144,11 +125,10 @@ class Camera():
         self.x_inc = (self.x_max - self.x_min)/self.pix_dim
 
     def screen_loc(self, x, y):
-        return Point(
-            x, y, self.loc.z + self.direction.terminal.z * self.distance)
+        return (x, y, self.loc[2] + self.direction[2] * self.distance)
 
     def ray_to(self, dest):
-        return Ray(self.loc, Vector(dest, self.loc))
+        return Ray(self.loc, Vector.make_vec(dest, self.loc))
 
 
 class Light():
@@ -180,8 +160,9 @@ class Scene():
         diffuse_level = 0.0
         specular_level = 0.0
         for light in self.lights:
-            diffuse_level += 1 - normal.angle_ish(
-                Vector(light.loc, intersect_point)) / pi
+            light_vec = Vector.make_vec(light.loc, intersect_point)
+            angle = Vector.angle_ish(normal, light_vec)
+            diffuse_level += 1 - angle / pi
         diffuse_level = min(diffuse_level, 1.0)
         lightness = min(diffuse_level + specular_level, 1.0)
         return (floor(base_color[0] * lightness),
@@ -238,17 +219,17 @@ def gen_png(grid):
 
 def make_scene():
     scene = Scene()
-    s1 = Sphere(Point(0, 0, 0), 5, (255, 0, 0))
-    s2 = Sphere(Point(-2, -2, 10), 5, (0, 0, 255))
+    s1 = Sphere((0, 0, 0), 5, (255, 0, 0))
+    s2 = Sphere((-2, -2, 10), 5, (0, 0, 255))
     scene.add_object(s1)
     scene.add_object(s2)
-    p1 = Plane(Point(4, 4, 15), Vector(Point(5, 5, -5)), (0, 255, 0))
+    p1 = Plane((4, 4, 15), (5, 5, -5), (0, 255, 0))
     scene.add_object(p1)
-    camera = Camera(Point(0, 0, -40), Vector(Point(0, 0, 1)))
+    camera = Camera((0, 0, -40), (0, 0, 1))
     scene.add_camera(camera)
-    light1 = Light(Point(8, -8, -8))
+    light1 = Light((8, -8, -8))
     scene.add_light(light1)
-    light2 = Light(Point(-8, 8, -8))
+    light2 = Light((-8, 8, -8))
     scene.add_light(light2)
     return scene
 
