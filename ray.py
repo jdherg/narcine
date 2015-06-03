@@ -7,24 +7,27 @@ from random import randint
 class Point():
     @classmethod
     def distance(cls, start, end):
-        return sqrt(
-            sum([pow(x_i - y_i, 2)
-                for x_i, y_i
-                in zip(start, end)]))
+        return sqrt((start[0] - end[0])**2 +
+                    (start[1] - end[1])**2 +
+                    (start[2] - end[2])**2)
 
     @classmethod
     def add(cls, point, vector):
-        return tuple((x+y for x, y in zip(point, vector)))
+        return (point[0] + vector[0],
+                point[1] + vector[1],
+                point[2] + vector[2])
 
 
 class Vector():
     @classmethod
     def make_vec(cls, terminal, origin):
-        return tuple(x - y for x, y in zip(terminal, origin))
+        return (terminal[0] - origin[0],
+                terminal[1] - origin[1],
+                terminal[2] - origin[2])
 
     @classmethod
     def length(cls, vec):
-        return Point.distance((0, 0, 0), vec)
+        return sqrt(vec[0]**2 + vec[1]**2 + vec[2]**2)
 
     @classmethod
     def unit(cls, vec):
@@ -36,7 +39,9 @@ class Vector():
 
     @classmethod
     def dot(cls, first, second):
-        return sum((x * y for x, y in zip(first, second)))
+        return first[0] * second[0] + \
+               first[1] * second[1] + \
+               first[2] * second[2]
 
     @classmethod
     def angle_ish(cls, first, second):
@@ -45,7 +50,9 @@ class Vector():
 
     @classmethod
     def scale(cls, vec, scalar):
-        return tuple((x * scalar for x in vec))
+        return (vec[0] * scalar,
+                vec[1] * scalar,
+                vec[2] * scalar)
 
 
 class Ray():
@@ -70,17 +77,18 @@ class Sphere():
         r = self.radius
         v = Vector.make_vec(ray.origin, c)
         d = ray.direction
-        disc = pow(Vector.dot(v, d), 2) - (pow(Vector.length(v), 2) - r*r)
+        vd = Vector.dot(v, d)
+        disc = pow(vd, 2) - (pow(Vector.length(v), 2) - r*r)
         ts = list()
         if disc == 0:
-            ts.append(-1*v.dot(d))
+            ts.append(-1*vd)
         elif disc > 0:
             disc = pow(disc, 0.5)
-            pre = Vector.dot(v, d) * -1
+            pre = vd * -1
             ts.append(pre + disc)
             ts.append(pre - disc)
         ts = [t for t in ts if t >= 0]
-        if len(ts) > 0:
+        if ts:
             return (min(ts), self)
         return None
 
