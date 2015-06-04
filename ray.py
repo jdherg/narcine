@@ -126,10 +126,10 @@ class Camera():
         self.pix_dim = 200
         self.log_dim = 20
         self.y_min = -1 * self.log_dim//2
-        self.y_max = self.log_dim//2+1
+        self.y_max = self.log_dim//2
         self.y_inc = (self.y_max - self.y_min)/self.pix_dim
         self.x_min = -1 * self.log_dim//2
-        self.x_max = self.log_dim//2+1
+        self.x_max = self.log_dim//2
         self.x_inc = (self.x_max - self.x_min)/self.pix_dim
 
     def screen_loc(self, x, y):
