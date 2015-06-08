@@ -59,12 +59,6 @@ class Vector():
             first[2] * second[2]
 
     @classmethod
-    def angle_ish(cls, first, second):
-        """Used in calculating diffuse light level. Deprecated."""
-        distance = Point.distance(Vector.unit(first), Vector.unit(second))
-        return distance * pi / 2.0
-
-    @classmethod
     def scale(cls, vec, scalar):
         return (vec[0] * scalar,
                 vec[1] * scalar,
@@ -215,8 +209,9 @@ class Scene():
         specular_level = 0.0
         for light in self.lights:
             light_vec = Vector.make_vec(light.loc, intersect_point)
-            angle = Vector.angle_ish(normal, light_vec)
-            diffuse_level += 1 - angle / pi
+            diffuse_level += max(
+                Vector.dot(Vector.unit(normal), Vector.unit(light_vec)),
+                0)
         diffuse_level = min(diffuse_level, 1.0)
         lightness = min(diffuse_level + specular_level, 1.0)
         return (floor(base_color[0] * lightness),
