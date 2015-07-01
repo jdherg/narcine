@@ -29,20 +29,20 @@ class TestVectors(unittest.TestCase):
 
 class TestIntersections(unittest.TestCase):
 
+    def setUp(self):
+        self.s = Sphere((0, 0, 0), 1.0)
+
     def test_sphere_hit(self):
-        s = Sphere((0, 0, 0), 1.0)
         r = Ray((-1, -1, -1), (1, 1, 1))
-        self.assertTrue(s.ray_intersect(r))
+        self.assertTrue(self.s.ray_intersect(r))
 
     def test_sphere_miss(self):
-        s = Sphere((0, 0, 0), 1.0)
         r = Ray((-1, -1, -1), (-1, -1, -1))
-        self.assertFalse(s.ray_intersect(r))
+        self.assertFalse(self.s.ray_intersect(r))
 
     def test_intersect_distance(self):
-        s = Sphere((40, 40, 40), 1.0)
-        r = Ray((0, 0, 0), (1, 1, 1))
-        intersect = s.ray_intersect(r)
+        r = Ray((40, 40, 40), (-1, -1, -1))
+        intersect = self.s.ray_intersect(r)
         t = intersect[0]
         self.assertAlmostEqual(
             t, Point.distance((0, 0, 0), (40, 40, 40)) - 1.0, delta=.0001)
